@@ -45,3 +45,5 @@ Public 저장소에는 비밀키와 가족 이메일을 커밋하지 않습니�
 ## 비용/마감일 데이터
 매년 바뀌므로 앱에서 `verified_at`와 `source_url`을 함께 저장합니다.
 초기 스키마는 2026–27 값을 넣을 수 있도록 준비되어 있으며, 공식 대학 페이지 기준으로 검증 후 입력하는 것을 전제로 합니다.
+
+<!-- deployment trigger: environment variables configured -->
