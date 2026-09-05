@@ -48,3 +48,4 @@ Public 저장소에는 비밀키와 가족 이메일을 커밋하지 않습니�
 
 <!-- deployment trigger: environment variables configured -->
 <!-- deployment trigger 2: all three values saved -->
+<!-- deployment trigger 3: recreated env vars as Config -->
