@@ -21,12 +21,17 @@ jobs:
 
       - name: Create database backup
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PGHOST: aws-0-ap-northeast-1.pooler.supabase.com
+          PGPORT: '5432'
+          PGUSER: postgres.udyurqsoxwxypymrhfss
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGDATABASE: postgres
+          PGSSLMODE: require
         run: |
           set -euo pipefail
-          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
+          test -n "$PGPASSWORD" || (echo "Missing SUPABASE_DB_PASSWORD secret" && exit 1)
           mkdir -p backup
-          pg_dump "$SUPABASE_DB_URL" \
+          pg_dump \
             --format=custom \
             --no-owner \
             --no-privileges \
