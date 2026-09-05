@@ -6,7 +6,7 @@ export default async function SchoolsPage() {
   const { data: schools } = await supabase
     .from("schools")
     .select("*")
-    .order("physics_rank");
+    .order("rank");
 
   return (
     <>
@@ -20,9 +20,9 @@ export default async function SchoolsPage() {
           <tbody>
             {schools?.map(s => (
               <tr key={s.id}>
-                <td>#{s.physics_rank}</td>
+                <td>#{s.rank}</td>
                 <td><Link href={`/schools/${s.id}`}><strong>{s.name}</strong></Link></td>
-                <td>{s.city}, {s.state}</td>
+                <td>{s.location}</td>
                 <td>{s.application_types ?? "—"}</td>
                 <td>{s.tuition_2026 ? `$${Number(s.tuition_2026).toLocaleString()}` : "검증 필요"}</td>
                 <td>{s.room_board_2026 ? `$${Number(s.room_board_2026).toLocaleString()}` : "검증 필요"}</td>
