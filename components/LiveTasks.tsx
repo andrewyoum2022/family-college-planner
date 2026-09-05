@@ -8,8 +8,8 @@ type Task = {
   title: string;
   category: string;
   due_date: string | null;
-  status: string;
-  owner: string | null;
+  completed: boolean;
+  owner_email: string | null;
   notes: string | null;
 };
 
@@ -19,33 +19,25 @@ export default function LiveTasks({ initialTasks }: { initialTasks: Task[] }) {
   const supabase = createClient();
 
   async function refresh() {
-    const { data } = await supabase
-      .from("tasks")
-      .select("*")
-      .order("due_date", { ascending: true, nullsFirst: false });
+    const { data } = await supabase.from("tasks").select("*").order("due_date", { ascending: true, nullsFirst: false });
     if (data) setTasks(data);
   }
 
   useEffect(() => {
-    const channel = supabase
-      .channel("tasks-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, refresh)
-      .subscribe();
+    const channel = supabase.channel("tasks-live").on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, refresh).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    await supabase.from("tasks").insert({ title: title.trim(), category: "Family", status: "todo" });
+    await supabase.from("tasks").insert({ title: title.trim(), category: "Family", completed: false });
     setTitle("");
     await refresh();
   }
 
   async function toggle(task: Task) {
-    await supabase.from("tasks").update({
-      status: task.status === "done" ? "todo" : "done"
-    }).eq("id", task.id);
+    await supabase.from("tasks").update({ completed: !task.completed }).eq("id", task.id);
     await refresh();
   }
 
@@ -57,11 +49,11 @@ export default function LiveTasks({ initialTasks }: { initialTasks: Task[] }) {
       </form>
       <div className="taskList">
         {tasks.map(task => (
-          <button key={task.id} className={`task ${task.status === "done" ? "done" : ""}`} onClick={() => toggle(task)}>
-            <span className="check">{task.status === "done" ? "✓" : "○"}</span>
+          <button key={task.id} className={`task ${task.completed ? "done" : ""}`} onClick={() => toggle(task)}>
+            <span className="check">{task.completed ? "✓" : "○"}</span>
             <span>
               <strong>{task.title}</strong>
-              <small>{task.category} · {task.due_date ?? "날짜 미정"} {task.owner ? `· ${task.owner}` : ""}</small>
+              <small>{task.category} · {task.due_date ?? "날짜 미정"} {task.owner_email ? `· ${task.owner_email}` : ""}</small>
             </span>
           </button>
         ))}
