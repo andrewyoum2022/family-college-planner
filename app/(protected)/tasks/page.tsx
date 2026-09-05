@@ -1,13 +1,3 @@
 import { createClient } from "@/lib/supabase/server";
 import LiveTasks from "@/components/LiveTasks";
-
-export default async function TasksPage() {
-  const supabase = await createClient();
-  const { data: tasks } = await supabase.from("tasks").select("*").order("due_date", { ascending: true, nullsFirst: false });
-  return (
-    <>
-      <div className="pageTitle"><div><div className="eyebrow">FAMILY WORKFLOW</div><h1>할 일</h1></div></div>
-      <section className="card"><LiveTasks initialTasks={tasks ?? []}/></section>
-    </>
-  );
-}
+export default async function TasksPage(){const supabase=await createClient();const{data:tasks}=await supabase.from("tasks").select("*").order("due_date",{ascending:true,nullsFirst:false});const done=(tasks??[]).filter(t=>t.completed).length;return <><div className="pageTitle"><div><div className="eyebrow">FAMILY WORKFLOW</div><h1>가족 할 일</h1></div><p>{done}개 완료 · {(tasks??[]).length-done}개 남음. 항목을 누르면 완료 상태가 가족 모두에게 반영됩니다.</p></div><section className="card"><LiveTasks initialTasks={tasks??[]}/></section></>}
