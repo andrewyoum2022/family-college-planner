@@ -6,10 +6,16 @@ export default async function Dashboard() {
   const supabase = await createClient();
 
   const [{ data: tasks }, { data: schools }, { data: deadlines }] = await Promise.all([
-    supabase.from("tasks").select("*").neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(8),
-    supabase.from("schools").select("id,name,physics_rank,status,city,state").order("physics_rank").limit(10),
-    supabase.from("deadlines").select("*").gte("date", new Date().toISOString().slice(0,10)).order("date").limit(6)
+    supabase.from("tasks").select("*").eq("completed", false).order("due_date", { ascending: true, nullsFirst: false }).limit(8),
+    supabase.from("schools").select("id,name,rank,status,location").order("rank").limit(10),
+    supabase.from("deadlines").select("*").gte("deadline_date", new Date().toISOString().slice(0,10)).order("deadline_date").limit(6)
   ]);
+
+  const liveTasks = (tasks ?? []).map((t) => ({
+    ...t,
+    owner: t.owner_email,
+    status: t.completed ? "done" : "todo"
+  }));
 
   return (
     <>
@@ -27,7 +33,7 @@ export default async function Dashboard() {
           <h2>다가오는 일정</h2>
           {deadlines?.map(d => (
             <div className="deadline" key={d.id}>
-              <div className="dateBadge">{d.date?.slice(5)}</div>
+              <div className="dateBadge">{d.deadline_date?.slice(5)}</div>
               <div><strong>{d.title}</strong><small>{d.category}</small></div>
             </div>
           ))}
@@ -36,7 +42,7 @@ export default async function Dashboard() {
 
         <section className="card span2">
           <h2>가족 할 일</h2>
-          <LiveTasks initialTasks={tasks ?? []} />
+          <LiveTasks initialTasks={liveTasks} />
           <Link className="more" href="/tasks">전체 할 일 →</Link>
         </section>
       </div>
@@ -46,9 +52,9 @@ export default async function Dashboard() {
         <div className="schoolGrid">
           {schools?.map(s => (
             <Link className="schoolMini" key={s.id} href={`/schools/${s.id}`}>
-              <span className="rank">#{s.physics_rank}</span>
+              <span className="rank">#{s.rank}</span>
               <strong>{s.name}</strong>
-              <small>{s.city}, {s.state}</small>
+              <small>{s.location}</small>
             </Link>
           ))}
         </div>
