@@ -1,0 +1,53 @@
+name: Daily encrypted Supabase backup
+
+on:
+  schedule:
+    # GitHub cron is UTC. 15:00 UTC = 00:00 KST (Asia/Seoul) next day.
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create database backup
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
+          mkdir -p backup
+          pg_dump "$SUPABASE_DB_URL" \
+            --format=custom \
+            --no-owner \
+            --no-privileges \
+            --file="backup/family-college-planner-$(date -u +%Y-%m-%dT%H-%M-%SZ).dump"
+
+      - name: Encrypt backup
+        env:
+          BACKUP_ENCRYPTION_PASSWORD: ${{ secrets.BACKUP_ENCRYPTION_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_ENCRYPTION_PASSWORD" || (echo "Missing BACKUP_ENCRYPTION_PASSWORD secret" && exit 1)
+          file=$(find backup -name '*.dump' -type f | head -n 1)
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 \
+            -in "$file" -out "$file.enc" \
+            -pass env:BACKUP_ENCRYPTION_PASSWORD
+          rm -f "$file"
+
+      - name: Upload encrypted backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backup/*.enc
+          if-no-files-found: error
+          retention-days: 90
